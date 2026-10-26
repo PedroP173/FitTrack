@@ -7,7 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,8 +47,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.fittrack.ui.theme.FitTrackTheme
 import kotlinx.serialization.Serializable
+import androidx.compose.ui.text.style.TextAlign
 
-val exerciseTypes = listOf("Strength", "Cardio", "Flexibility", "Yoga")
+data class ExerciseType(
+    val name: String,
+    val description: String
+)
+val exerciseTypes = listOf(
+    ExerciseType("Strength", "Build muscle and increase physical strength."),
+    ExerciseType("Cardio", "Enhance cardiovascular health and endurance."),
+    ExerciseType("Flexibility", "Stretches to improve flexibility and mobility."),
+    ExerciseType("Yoga", "Static postures for relaxation and peace of mind.")
+)
 
 @Serializable
 object DashBoardRoute
@@ -53,7 +68,6 @@ object StrengthRoute
 
 @Serializable
 object CardioRoute
-
 
 
 class MainActivity : ComponentActivity() {
@@ -68,6 +82,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun FitTrackApp(windowSizeClass: WindowSizeClass) {
@@ -84,7 +99,7 @@ class MainActivity : ComponentActivity() {
                     title = {
                         Text(
                             text = when {
-                                currentDestination?.contains("DashBoardRoute") == true -> "Dashboard"
+                                currentDestination?.contains("DashBoardRoute") == true -> "FitTrack Dashboard"
                                 currentDestination?.contains("StrengthRoute") == true -> "Strength Exercises"
                                 currentDestination?.contains("CardioRoute") == true -> "Cardio Exercises"
                                 currentDestination?.contains("FlexRoute") == true -> "Flexibility Exercises"
@@ -95,7 +110,7 @@ class MainActivity : ComponentActivity() {
                     },
                     navigationIcon = {
                         if (canNavigateBack) {
-                            IconButton(onClick = { navController.navigateUp()}) {
+                            IconButton(onClick = { navController.navigateUp() }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Navigate back"
@@ -129,42 +144,150 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Needs today's stats at the top
 @Composable
 fun DashboardScreen(
-    exerciseTypes: List<String>,
+    exerciseTypes: List<ExerciseType>,
     windowSizeClass: WindowSizeClass,
     onUserClick: (String) -> Unit
 ) {
-
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        ExerciseList(
+            exerciseTypes = exerciseTypes,
+            onUserClick = onUserClick,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        )
+    }
 }
 
 @Composable
 fun ExerciseList(
-    exerciseTypes: List<String>,
+    exerciseTypes: List<ExerciseType>,
     onUserClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Today's Summary",
+                        style = MaterialTheme.typography.titleSmall,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "0",
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Workouts Done",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "0",
+                                style = MaterialTheme.typography.titleLarge,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Total mins",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Text(
+                text = "Workout Categories",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Left
+            )
+        }
         items(exerciseTypes) { exerciseType ->
             Card(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clickable{ onUserClick(exerciseType) },
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                    .fillMaxWidth()
+                    .clickable { onUserClick(exerciseType.name) },
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Box(
-                    contentAlignment = Alignment.Center
+                Column(
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 ) {
                     Text(
-                        text = exerciseType,
-                        style = MaterialTheme.typography.titleLarge
+                        text = exerciseType.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Left
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = exerciseType.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Left
                     )
                 }
             }
+        }
+        item {
+            Spacer(modifier = Modifier.height(12.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Workout Log",
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Left
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "There are no recent workouts.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Left
+                )
+            }
+
         }
     }
 }
