@@ -28,7 +28,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -36,15 +35,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewDynamicColors
-import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.fittrack.ui.theme.FitTrackTheme
 import kotlinx.serialization.Serializable
 import androidx.compose.ui.text.style.TextAlign
@@ -68,6 +64,17 @@ object StrengthRoute
 
 @Serializable
 object CardioRoute
+
+@Serializable
+data class WorkoutSelectionRoute(
+    val categoryName: String
+)
+
+// Could add toggle for Material You (looks weird on Pixel sometimes)
+// Needs actual variables for workouts and time spent, logging, user input/details screen
+
+
+
 
 
 class MainActivity : ComponentActivity() {
@@ -93,6 +100,9 @@ class MainActivity : ComponentActivity() {
 
         val canNavigateBack = navController.previousBackStackEntry != null
 
+        // Seems ok for now?
+        val categoryName = navBackStackEntry?.arguments?.getString("categoryName")
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -100,10 +110,7 @@ class MainActivity : ComponentActivity() {
                         Text(
                             text = when {
                                 currentDestination?.contains("DashBoardRoute") == true -> "FitTrack Dashboard"
-                                currentDestination?.contains("StrengthRoute") == true -> "Strength Exercises"
-                                currentDestination?.contains("CardioRoute") == true -> "Cardio Exercises"
-                                currentDestination?.contains("FlexRoute") == true -> "Flexibility Exercises"
-                                currentDestination?.contains("YogaRoute") == true -> "Yoga Exercises"
+                                currentDestination?.contains("WorkoutSelectionRoute") == true ->  "$categoryName Exercises"
                                 else -> ""
                             }
                         )
@@ -114,6 +121,7 @@ class MainActivity : ComponentActivity() {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Navigate back"
+
                                 )
                             }
                         }
@@ -135,8 +143,15 @@ class MainActivity : ComponentActivity() {
                     DashboardScreen(
                         exerciseTypes = exerciseTypes,
                         windowSizeClass = windowSizeClass,
-                        onUserClick = {}
-
+                        onUserClick = { categoryName ->
+                            navController.navigate(WorkoutSelectionRoute(categoryName = categoryName))
+                        }
+                    )
+                }
+                composable<WorkoutSelectionRoute> { backStackEntry ->
+                    val selectionRoute: WorkoutSelectionRoute = backStackEntry.toRoute()
+                    WorkoutSelectionScreen(
+                        categoryName = selectionRoute.categoryName
                     )
                 }
             }
@@ -144,7 +159,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Needs today's stats at the top
+// Needs today's stats at the top instead of placeholder
 @Composable
 fun DashboardScreen(
     exerciseTypes: List<ExerciseType>,
@@ -291,5 +306,67 @@ fun ExerciseList(
         }
     }
 }
+
+@Composable
+fun WorkoutSelectionScreen(
+    categoryName: String
+) {
+    val category = exerciseTypes.find { it.name == categoryName }
+    val exercises = when (categoryName.lowercase()) {
+        "strength" -> listOf("Push-ups","Squats", "Bench Press", "Deadlift")
+        "cardio" -> listOf("Running", "Outdoor Cycling", "Swimming", "Jumping Jacks")
+        "flexibility" -> listOf("Cobra Stretch", "Seated Hamstring Stretch", "Leg Raises", "Shoulder Stretch")
+        "yoga" -> listOf("Warrior I", "Warrior II", "Warrior III", "Tree Pose")
+        else -> emptyList()
+    }
+
+    Box (
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(exercises) { exercise ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { },
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = exercise,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Left
+                            )
+                            Text(
+                                text = "Add",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Left
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 
